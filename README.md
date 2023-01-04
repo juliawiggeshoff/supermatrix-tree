@@ -8,7 +8,7 @@ Description:
 I recommend running the workflow on HPC clusters, as the analyses are resource and time consuming.
 
 - If you don't have it yet, it is necessary to have conda or miniconda in your machine.
-Follow [there](https://conda.io/projects/conda/en/latest/user-guide/install/linux.html) instructions.
+Follow [these](https://conda.io/projects/conda/en/latest/user-guide/install/linux.html) instructions.
 	- I highly (**highly!**) recommend installing a much much faster package manager to replace conda, [mamba](https://github.com/mamba-org/mamba)
 	- In you command-line, type:
 	`conda install -n base -c conda-forge mamba` 
@@ -26,8 +26,8 @@ e.g.:
 You usually don't have sudo rights to install anything to the root of the cluster. So, as I wanted to work with a more updated distribution of conda and especially use mamba to replace conda as a package manager, I had to first create my own "local" conda, i.e. I first loaded the module and then created a new environment I called localconda 
 1. `module load anaconda3/2022.05`
 2. `conda create -n localconda -c conda-forge conda=22.9.0`
-3. `conda activate localconda`
-4. `conda install -n localconda -c conda-forge mamba`
+3. `conda install -n localconda -c conda-forge mamba`
+4. `conda activate localconda`
 
 If you run `conda env list` you'll probably see something like this:
 `/home/myusername/.conda/envs/localconda/`

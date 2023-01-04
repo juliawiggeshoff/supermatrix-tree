@@ -9,8 +9,6 @@
 #$ -M user.email@gmail.com
 #$ -m be
 
-mkdir -p cluster_logs/
-
 module load anaconda3/2022.05
 conda activate /home/myusername/.conda/envs/localconda/envs/ml-supermatrix-tree
 

@@ -38,8 +38,6 @@ rule modelfinder:
     conda: 
         "envs/env_iqtree.yaml"
     threads: workflow.cores * 0.4  
-    log:
-        "results/logs/project/modelfinder_{project}.log"
     shell:
-        "(iqtree -s {input.supermatrix} -st AA -spp {input.charset_nex} -pre {output.abspath_modelfinder}/BestModels_aa "
-        "-nt {threads} -m MF -msub nuclear -mrate E,I,G,I+G,R -cmin 2 -cmax 15 -madd LG4X,LG4M -safe -merit AICc) &> {log}"
+        "mkdir -p {output.abspath_modelfinder}; iqtree -s {input.supermatrix} -st AA -spp {input.charset_nex} -pre {output.abspath_modelfinder}/BestModels_aa "
+        "-nt {threads} -m MF -msub nuclear -mrate E,I,G,I+G,R -cmin 2 -cmax 15 -madd LG4X,LG4M -safe -merit AICc"

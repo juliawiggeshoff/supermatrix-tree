@@ -10,10 +10,12 @@ def get_supermatrix_file(wildcards):
 
 rule all:
     input:
-        expand("results/{project}/ML_r/ML_r_{repnumber}_{project}.log", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1))),
-        expand("results/{project}/ML_r/ML_r_{repnumber}_{project}.treefile", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1))),
-        expand("results/{project}/ML_p/ML_p_{repnumber}_{project}.log", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1))),
-        expand("results/{project}/ML_p/ML_p_{repnumber}_{project}.treefile", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1)))
+        #expand("results/{project}/ML_r/ML_r_{repnumber}_{project}.log", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1))),
+        #expand("results/{project}/ML_r/ML_r_{repnumber}_{project}.treefile", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1))),
+        #expand("results/{project}/ML_p/ML_p_{repnumber}_{project}.log", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1))),
+        #expand("results/{project}/ML_p/ML_p_{repnumber}_{project}.treefile", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1)))
+        expand("results/{project}/get_ML_results_{repnumber}_{project}.done", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1))),
+        expand("results/{project}/bootstrap/BS_500_{project}.boottrees", project=list(samples_df.index))
 
 rule charset_to_nexus:
     input:
@@ -78,3 +80,35 @@ rule ML_r:
     shell:
         "mkdir -p {params.abspath_ML_r}; iqtree -s {input.supermatrix} -st AA -spp {input.best_scheme_nex} "
         "-pre {params.abspath_ML_r}/ML_r_{wildcards.repnumber}_{wildcards.project} -nt {threads}  -gmedian -t RANDOM -safe"
+rule get_ML_results:
+    input:
+        ML_r_log="results/{project}/ML_r/ML_r_{repnumber}_{project}.log",
+        ML_p_log="results/{project}/ML_p/ML_p_{repnumber}_{project}.log"
+    output:
+        touch("results/{project}/get_ML_results_{repnumber}_{project}.done")
+    params:
+        ML_results_table="results/{project}/table_ML_{project}.txt",
+        #ML_results_sort_table="results/{project}/sort_table_ML_{project}.txt",
+        ML_r_prefix="ML_r_{repnumber}_{project}",
+        ML_p_prefix="ML_p_{repnumber}_{project}"
+    shell:
+        "touch {params.ML_results_table}; "
+        "echo -n {params.ML_r_prefix} >> {params.ML_results_table}; "
+        "echo -n -e \"\\t\" >> {params.ML_results_table}; grep \"BEST SCORE FOUND\" {input.ML_r_log} | cut -d \":\" -f2 | sed \"s/ //\" | xargs echo >> {params.ML_results_table}; "
+        "echo -n {params.ML_p_prefix} >> {params.ML_results_table}; "
+        "echo -n -e \"\\t\" >> {params.ML_results_table}; grep \"BEST SCORE FOUND\" {input.ML_p_log} | cut -d \":\" -f2 | sed \"s/ //\" | xargs echo >> {params.ML_results_table}"
+
+rule bootstrap:
+    input:
+        best_scheme_nex="results/{project}/modelfinder/BestModels_aa_{project}.best_scheme.nex",
+        supermatrix=get_supermatrix_file
+    output:
+        BS_boottrees="results/{project}/bootstrap/BS_500_{project}.boottrees"
+    params: 
+        abspath_bootstrap="results/{project}/bootstrap"
+    conda: 
+        "envs/env_iqtree.yaml"
+    threads: workflow.cores * 0.4 
+    shell:
+        "mkdir -p {params.abspath_bootstrap}; iqtree -s {input.supermatrix} -st AA -spp {input.best_scheme_nex} "
+        "-pre {params.abspath_bootstrap}/BS_500_{wildcards.project} -nt {threads} -gmedian -t RANDOM -bo 500 -safe"

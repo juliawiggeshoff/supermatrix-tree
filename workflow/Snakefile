@@ -10,7 +10,10 @@ def get_supermatrix_file(wildcards):
 
 rule all:
     input:
-        expand("results/{project}/modelfinder", project=list(samples_df.index))
+        expand("results/{project}/ML_r/ML_r_{repnumber}_{project}.log", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1))),
+        expand("results/{project}/ML_r/ML_r_{repnumber}_{project}.treefile", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1))),
+        expand("results/{project}/ML_p/ML_p_{repnumber}_{project}.log", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1))),
+        expand("results/{project}/ML_p/ML_p_{repnumber}_{project}.treefile", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1)))
 
 rule charset_to_nexus:
     input:
@@ -34,10 +37,44 @@ rule modelfinder:
         charset_nex="results/{project}/charset_{project}.nex",
         supermatrix=get_supermatrix_file
     output:
-        abspath_modelfinder=directory("results/{project}/modelfinder")
+        best_scheme_nex="results/{project}/modelfinder/BestModels_aa_{project}.best_scheme.nex"
+    params:
+        abspath_modelfinder="results/{project}/modelfinder"
     conda: 
         "envs/env_iqtree.yaml"
     threads: workflow.cores * 0.4  
     shell:
-        "mkdir -p {output.abspath_modelfinder}; iqtree -s {input.supermatrix} -st AA -spp {input.charset_nex} -pre {output.abspath_modelfinder}/BestModels_aa "
+        "mkdir -p {params.abspath_modelfinder}; iqtree -s {input.supermatrix} -st AA -spp {input.charset_nex} -pre {params.abspath_modelfinder}/BestModels_aa_{wildcards.project} "
         "-nt {threads} -m MF -msub nuclear -mrate E,I,G,I+G,R -cmin 2 -cmax 15 -madd LG4X,LG4M -safe -merit AICc"
+
+rule ML_p:
+    input:
+        best_scheme_nex="results/{project}/modelfinder/BestModels_aa_{project}.best_scheme.nex",
+        supermatrix=get_supermatrix_file
+    output:
+        ML_p_log="results/{project}/ML_p/ML_p_{repnumber}_{project}.log",
+        ML_p_treefile="results/{project}/ML_p/ML_p_{repnumber}_{project}.treefile"
+    params: 
+        abspath_ML_p="results/{project}/ML_p"
+    conda: 
+        "envs/env_iqtree.yaml"
+    threads: workflow.cores * 0.3  
+    shell:
+        "mkdir -p {params.abspath_ML_p}; iqtree -s {input.supermatrix} -st AA -spp {input.best_scheme_nex} "
+        "-pre {params.abspath_ML_p}/ML_p_{wildcards.repnumber}_{wildcards.project} -nt {threads} -gmedian -safe"
+
+rule ML_r:
+    input:
+        best_scheme_nex="results/{project}/modelfinder/BestModels_aa_{project}.best_scheme.nex",
+        supermatrix=get_supermatrix_file
+    output:
+        ML_r_log="results/{project}/ML_r/ML_r_{repnumber}_{project}.log",
+        ML_r_treefile="results/{project}/ML_r/ML_r_{repnumber}_{project}.treefile"
+    params: 
+        abspath_ML_r="results/{project}/ML_r"
+    conda: 
+        "envs/env_iqtree.yaml"
+    threads: workflow.cores * 0.3  
+    shell:
+        "mkdir -p {params.abspath_ML_r}; iqtree -s {input.supermatrix} -st AA -spp {input.best_scheme_nex} "
+        "-pre {params.abspath_ML_r}/ML_r_{wildcards.repnumber}_{wildcards.project} -nt {threads}  -gmedian -t RANDOM -safe"

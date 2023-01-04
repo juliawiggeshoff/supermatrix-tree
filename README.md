@@ -52,7 +52,7 @@ Blabla
 
 2. Activate your conda base
 
-`coda activate base`
+`conda activate base`
 
 - If you are working on a cluster or have your own "local", isolated environment you want to activate instead (see [here](https://gitlab.leibniz-lib.de/jwiggeshoff/rna-seq-to-busco#hpc-system)), use its name to activate it
 
@@ -118,6 +118,7 @@ Run this to create the environments from the rules:
 
 ### Option 1:
 `mkdir -p snakejob_logs`
+
 `nohup snakemake --keep-going --use-conda --verbose --printshellcmds --reason --nolock --cores 31 --max-threads 15 --cluster "qsub -V -b y -j y -o snakejob_logs/ -cwd -q fast.q,small.q,medium.q,large.q -M user.email@gmail.com -m be" > nohup_ml-supermatrix-tree_$(date +"%F_%H").out &`
 
 Remember to:
@@ -126,7 +127,7 @@ Remember to:
 
 ### Option 2:
 
-A template jobscript `template_run_ml-supermatrix-tree.sh` is found under `misc/`
+A template jobscript `template_run_ml-supermatrix-tree.sh` is found under [`misc/`](https://gitlab.leibniz-lib.de/jwiggeshoff/ml-supermatrix-tree/-/tree/main/misc)
 
 **Important:** Please, modify the qsub options according to your system! 
 Features to modify:

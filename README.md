@@ -32,6 +32,18 @@ You usually don't have sudo rights to install anything to the root of the cluste
 If you run `conda env list` you'll probably see something like this:
 `/home/myusername/.conda/envs/localconda/`
 
+# Data requirements
+
+## Supermatrix Fasta file
+
+## Partition file Txt file
+
+## Tab-separated table
+
+## Configuration file
+
+Blabla
+
 # Installation 
 
 1. Clone this repository
@@ -73,18 +85,6 @@ You will probably see something like this among your enviornments:
 From now own, you have to give this full path when activating the environment prior to running the workflow
 
 `conda activate /home/myusername/.conda/envs/localconda/envs/ml-supermatrix-tree`
-
-# Data requirements
-
-## Supermatrix Fasta file
-
-## Partition file Txt file
-
-## Tab-separated table
-
-## Configuration file
-
-Blabla
 
 # Running the workflow
 

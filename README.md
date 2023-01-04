@@ -129,6 +129,7 @@ Remember to:
 
 A template jobscript `template_run_ml-supermatrix-tree.sh` is found under [`misc/`](https://gitlab.leibniz-lib.de/jwiggeshoff/ml-supermatrix-tree/-/tree/main/misc)
 
+
 **Important:** Please, modify the qsub options according to your system! 
 Features to modify:
 - E-mail address: -M *user.email@gmail.com*
@@ -145,6 +146,8 @@ If you are within the folder `misc/`:
 `cp template_run_ml-supermatrix-tree.sh ../run_ml-supermatrix-tree.sh`
 
 You should see within the path where the folders config/, resources/, results/, and workflow/ are, together with files README.md and environment.yaml
+
+Remember to `mkdir -p cluster_logs` before running for the first time
 
 Finally, run:
 

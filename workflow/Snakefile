@@ -1,0 +1,45 @@
+import pandas as pd
+
+samples_df=pd.read_table(config["dataset"], dtype=str, index_col="Project_name")
+samples_dict=samples_df.to_dict()
+
+def get_charset_file(wildcards):
+    return samples_dict["Path"][wildcards.project] + "/" + samples_dict["Charset_file"][wildcards.project] 
+def get_supermatrix_file(wildcards):
+    return samples_dict["Path"][wildcards.project] + "/" + samples_dict["Supermatrix_file"][wildcards.project] 
+
+rule all:
+    input:
+        expand("results/{project}/modelfinder", project=list(samples_df.index))
+
+rule charset_to_nexus:
+    input:
+        charset=get_charset_file
+    output:
+        charset_nex="results/{project}/charset_{project}.nex"
+    params:
+        out_dir="results/{project}"
+    log:
+        "results/logs/{project}/charset_to_nexus_{project}.log"
+    shell:
+        "(cp {input.charset} {params.out_dir}/charset_{wildcards.project}.txt; "
+        "awk '{{gsub(\"charset\",\"        charset\");print}}' {params.out_dir}/charset_{wildcards.project}.txt > {output.charset_nex}; "
+        "sed -i \'1s/^/#nexus\\nbegin sets;\\n/\' {output.charset_nex}; "
+        "echo \"end;\" >> {output.charset_nex}; "
+        "rm {params.out_dir}/charset_{wildcards.project}.txt; "
+        "echo {output.charset_nex} DONE) &> {log}"
+
+rule modelfinder:
+    input: 
+        charset_nex="results/{project}/charset_{project}.nex",
+        supermatrix=get_supermatrix_file
+    output:
+        abspath_modelfinder=directory("results/{project}/modelfinder")
+    conda: 
+        "envs/env_iqtree.yaml"
+    threads: workflow.cores * 0.4  
+    log:
+        "results/logs/project/modelfinder_{project}.log"
+    shell:
+        "(iqtree -s {input.supermatrix} -st AA -spp {input.charset_nex} -pre {output.abspath_modelfinder}/BestModels_aa "
+        "-nt {threads} -m MF -msub nuclear -mrate E,I,G,I+G,R -cmin 2 -cmax 15 -madd LG4X,LG4M -safe -merit AICc) &> {log}"

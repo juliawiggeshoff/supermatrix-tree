@@ -8,12 +8,16 @@ def get_partition_file(wildcards):
 def get_supermatrix_file(wildcards):
     return samples_dict["Path"][wildcards.project] + "/" + samples_dict["Supermatrix_file"][wildcards.project] 
 
+def get_info_convert_or_not(wildcards):
+    return samples_dict["Convert_or_not"][wildcards.project]
+
 rule all:
     input:
-        expand("results/{project}/get_ML_results_{repnumber}_{project}.done", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1))),
-        #expand("results/{project}/bootstrap/BS_500_{project}.boottrees", project=list(samples_df.index)),
-        expand("results/{project}/tree_SH_aLRT_aBayes/Best_SH_aLRT_aBayes_{project}.treefile", project=list(samples_df.index)),
-        expand("results/{project}/tree_BS/tree_BS_{project}.suptree", project=list(samples_df.index))
+        expand("results/{project}/charset_{project}.nex", project=list(samples_df.index))
+        #expand("results/{project}/get_ML_results_{repnumber}_{project}.done", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1))),
+        ##expand("results/{project}/bootstrap/BS_500_{project}.boottrees", project=list(samples_df.index)),
+        #expand("results/{project}/tree_SH_aLRT_aBayes/Best_SH_aLRT_aBayes_{project}.treefile", project=list(samples_df.index)),
+        #expand("results/{project}/tree_BS/tree_BS_{project}.suptree", project=list(samples_df.index))
 
 rule charset_to_nexus:
     input:
@@ -21,16 +25,21 @@ rule charset_to_nexus:
     output:
         charset_nex="results/{project}/charset_{project}.nex"
     params:
-        out_dir="results/{project}"
+        out_dir="results/{project}",
+        convertornot=get_info_convert_or_not
     log:
         "results/{project}/logs/charset_to_nexus_{project}.log"
     shell:
-        "(cp {input.charset} {params.out_dir}/charset_{wildcards.project}.txt; "
+        "(convertornot=\"{params.convertornot}\"; "
+        "if [ \"${{convertornot,,}}\" == \"true\" ]; then "
+        "cp {input.charset} {params.out_dir}/charset_{wildcards.project}.txt; "
         "awk '{{gsub(\"charset\",\"        charset\");print}}' {params.out_dir}/charset_{wildcards.project}.txt > {output.charset_nex}; "
         "sed -i \'1s/^/#nexus\\nbegin sets;\\n/\' {output.charset_nex}; "
         "echo \"end;\" >> {output.charset_nex}; "
         "rm {params.out_dir}/charset_{wildcards.project}.txt; "
-        "echo {output.charset_nex} DONE) &> {log}"
+        "else cp {input.charset} {output.charset_nex}; "
+        "fi; "
+        "echo {output.charset_nex} DONE;) &> {log}"
 
 rule modelfinder:
     input: 
@@ -178,10 +187,9 @@ rule tree_BS:
 onsuccess:
     print("Workflow finished, no error!")
     print("Generating report...")
-    shell("snakemake --report report.hml --configfile {workflow.configfiles}")
+    shell("snakemake --report report.html --configfile {workflow.configfiles}")
     print("Done!")
 
 onerror:
     print("An error occurred!")
     print("See the log file for more details:")
-    print("{log}")

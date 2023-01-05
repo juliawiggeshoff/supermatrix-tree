@@ -13,11 +13,9 @@ def get_info_convert_or_not(wildcards):
 
 rule all:
     input:
-        expand("results/{project}/charset_{project}.nex", project=list(samples_df.index))
-        #expand("results/{project}/get_ML_results_{repnumber}_{project}.done", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1))),
-        ##expand("results/{project}/bootstrap/BS_500_{project}.boottrees", project=list(samples_df.index)),
-        #expand("results/{project}/tree_SH_aLRT_aBayes/Best_SH_aLRT_aBayes_{project}.treefile", project=list(samples_df.index)),
-        #expand("results/{project}/tree_BS/tree_BS_{project}.suptree", project=list(samples_df.index))
+        expand("results/{project}/get_ML_results_{repnumber}_{project}.done", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1))),
+        expand("results/{project}/tree_SH_aLRT_aBayes/Best_SH_aLRT_aBayes_{project}.treefile", project=list(samples_df.index)),
+        expand("results/{project}/tree_BS/tree_BS_{project}.suptree", project=list(samples_df.index))
 
 rule charset_to_nexus:
     input:

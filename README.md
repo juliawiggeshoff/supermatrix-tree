@@ -67,7 +67,7 @@ begin sets;
         charset 3133at6447 = 1 - 463 ;
         charset 7677at6447 = 464 - 636;
         charset 3966at6447 = 637 - 1001;
-					...
+				...
         charset 1248at6447 = 72452 - 73396;
         charset 7265at6447 = 73397 - 73664;
 end;
@@ -121,7 +121,7 @@ Required file for important settings from the analyses. Workflow will fail if an
 
 `conda activate base`
 
-- If you are working on a cluster or have your own "local", isolated environment you want to activate instead (see [here](https://gitlab.leibniz-lib.de/jwiggeshoff/rna-seq-to-busco#hpc-system)), use its name to activate it
+- If you are working on a cluster or have your own "local", isolated environment you want to activate instead (see [here](https://gitlab.leibniz-lib.de/jwiggeshoff/ml-supermatrix-tree#hpc-system)), use its name to activate it
 
 `conda activate localconda`
 
@@ -129,11 +129,11 @@ Required file for important settings from the analyses. Workflow will fail if an
 
 `conda env create --file environment.yaml`
 
-If you followed what I recommended in the [System requirements](https://gitlab.leibniz-lib.de/jwiggeshoff/rna-seq-to-busco#local-machine), run this intead:
+If you followed what I recommended in the [System requirements](https://gitlab.leibniz-lib.de/jwiggeshoff/ml-supermatrix-tree#local-machine), run this intead:
 
 `mamba env create --file environment.yaml`
 
-The environment from rna-seq-to-busco is created
+The environment from ml-supermatrix-tree is created
 
 4. *Always* activate the environment before running the workflow
 
@@ -200,12 +200,12 @@ A template jobscript `template_run_ml-supermatrix-tree.sh` is found under [`misc
 
 **Important:** Please, modify the qsub options according to your system! 
 Features to modify:
-- E-mail address: -M *user.email@gmail.com*
-- Mailing settings, if needed: -m *be*
+- E-mail address: `-M *user.email@gmail.com`
+- Mailing settings, if needed: `-m be`
 - If you  want to split stderr to stdout, use `-j n` instead and add the line `#$ -e cluster_logs/`
-- If you want to, the name of the jobscript: `-N *ml-supermatrix-tree*`
-- **Name of parallel environment (PE) as well as the number of maximum threads to use:** `-pe *smp 31*`
-- **Queue name!** (extremely unique to your system): `-q *small.q,medium.q,large.q*`
+- If you want to, the name of the jobscript: `-N ml-supermatrix-tree`
+- **Name of parallel environment (PE) as well as the number of maximum threads to use:** `-pe smp 31`
+- **Queue name!** (extremely unique to your system): `-q small.q,medium.q,large.q`
 
 Ater modifying the template, copy it (while also modifying its name) to the working directory:
 
@@ -227,6 +227,8 @@ Upon successfully finishing the analyses, Snakemake will **automatically** gener
 
 It describes the used software versions, the commands, and paths to in and output files. 
 
-To know more, see the documentation from Snakemake [here](https://snakemake.readthedocs.io/en/stable/snakefiles/reporting.html).
+**To be released:** Summary of main results, drawn trees 
+
+To know more about report files, see the documentation from Snakemake [here](https://snakemake.readthedocs.io/en/stable/snakefiles/reporting.html).
 
 # Done :)

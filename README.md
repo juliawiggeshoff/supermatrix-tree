@@ -92,7 +92,7 @@ The table is important not only to know how the two input files are named and wh
 **Important**:
 - **No cell can be empty**, as Snakemake will see this as missing input file and the analyses will not run
 - **Never modify the headers** from the table otherwise the same thing will happen
-- The names of the parition file and supermatrix have to be the same as the actual files you copied into `resources/[*my_project_name*]`
+- The names of the parition file and supermatrix have to be the same as the actual files you copied into `resources/[my_project_name]`
 
 |Project_name|Partition_file|Supermatrix_file|Path|
 |--|--|--|--|

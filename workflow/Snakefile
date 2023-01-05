@@ -3,8 +3,8 @@ import pandas as pd
 samples_df=pd.read_table(config["dataset"], dtype=str, index_col="Project_name")
 samples_dict=samples_df.to_dict()
 
-def get_charset_file(wildcards):
-    return samples_dict["Path"][wildcards.project] + "/" + samples_dict["Charset_file"][wildcards.project] 
+def get_partition_file(wildcards):
+    return samples_dict["Path"][wildcards.project] + "/" + samples_dict["Partition_file"][wildcards.project] 
 def get_supermatrix_file(wildcards):
     return samples_dict["Path"][wildcards.project] + "/" + samples_dict["Supermatrix_file"][wildcards.project] 
 
@@ -17,13 +17,13 @@ rule all:
 
 rule charset_to_nexus:
     input:
-        charset=get_charset_file
+        charset=get_partition_file
     output:
         charset_nex="results/{project}/charset_{project}.nex"
     params:
         out_dir="results/{project}"
     log:
-        "results/{project}/logs/"
+        "results/{project}/logs/charset_to_nexus_{project}.log"
     shell:
         "(cp {input.charset} {params.out_dir}/charset_{wildcards.project}.txt; "
         "awk '{{gsub(\"charset\",\"        charset\");print}}' {params.out_dir}/charset_{wildcards.project}.txt > {output.charset_nex}; "
@@ -110,7 +110,7 @@ rule find_best_ML_tree:
     params:
         ML_results_table="results/{project}/table_ML_{project}.txt"
     log:
-        "results/{project}/logs/"
+        "results/{project}/logs/find_best_ML_tree_{project}.log"
     shell:
         "(ls {input}; sort -k2 {params.ML_results_table} > {output.ML_results_sort_table}; "
         "echo sorted {params.ML_results_table}; echo {output.ML_results_sort_table} DONE) &> {log}"     
@@ -173,11 +173,15 @@ rule tree_BS:
         "-t {input.BS_boottrees} -pre {params.abspath_tree_BS}/tree_BS_{wildcards.project} -nt {threads}; "
         "cp {params.abspath_tree_BS}/tree_BS_{wildcards.project}.log {params.logpath}"
 
-#onsuccess:
-    #shell("mkdir -p ")
-
-
 #rule summarize_results:
 
+onsuccess:
+    print("Workflow finished, no error!")
+    print("Generating report...")
+    shell("snakemake --report report.hml --configfile {workflow.configfiles}")
+    print("Done!")
 
-
+onerror:
+    print("An error occurred!")
+    print("See the log file for more details:")
+    print("{log}")

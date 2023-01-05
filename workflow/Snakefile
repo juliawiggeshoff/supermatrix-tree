@@ -22,13 +22,15 @@ rule charset_to_nexus:
         charset_nex="results/{project}/charset_{project}.nex"
     params:
         out_dir="results/{project}"
+    log:
+        "results/{project}/logs/"
     shell:
-        "cp {input.charset} {params.out_dir}/charset_{wildcards.project}.txt; "
+        "(cp {input.charset} {params.out_dir}/charset_{wildcards.project}.txt; "
         "awk '{{gsub(\"charset\",\"        charset\");print}}' {params.out_dir}/charset_{wildcards.project}.txt > {output.charset_nex}; "
         "sed -i \'1s/^/#nexus\\nbegin sets;\\n/\' {output.charset_nex}; "
         "echo \"end;\" >> {output.charset_nex}; "
         "rm {params.out_dir}/charset_{wildcards.project}.txt; "
-        "echo {output.charset_nex} DONE"
+        "echo {output.charset_nex} DONE) &> {log}"
 
 rule modelfinder:
     input: 
@@ -37,13 +39,15 @@ rule modelfinder:
     output:
         best_scheme_nex="results/{project}/modelfinder/BestModels_aa_{project}.best_scheme.nex"
     params:
-        abspath_modelfinder="results/{project}/modelfinder"
+        abspath_modelfinder="results/{project}/modelfinder",
+        logpath="results/{project}/logs/"
     conda: 
         "envs/env_iqtree.yaml"
     threads: workflow.cores * 0.4  
     shell:
         "mkdir -p {params.abspath_modelfinder}; iqtree -s {input.supermatrix} -st AA -spp {input.charset_nex} -pre {params.abspath_modelfinder}/BestModels_aa_{wildcards.project} "
-        "-nt {threads} -m MF -msub nuclear -mrate E,I,G,I+G,R -cmin 2 -cmax 15 -madd LG4X,LG4M -safe -merit AICc"
+        "-nt {threads} -m MF -msub nuclear -mrate E,I,G,I+G,R -cmin 2 -cmax 15 -madd LG4X,LG4M -safe -merit AICc; "
+        "cp {params.abspath_modelfinder}/BestModels_aa_{wildcards.project}.log {params.logpath}"
 
 rule ML_p:
     input:
@@ -53,13 +57,15 @@ rule ML_p:
         ML_p_log="results/{project}/ML_p/ML_p_{repnumber}_{project}.log",
         ML_p_treefile="results/{project}/ML_p/ML_p_{repnumber}_{project}.treefile"
     params: 
-        abspath_ML_p="results/{project}/ML_p"
+        abspath_ML_p="results/{project}/ML_p",
+        logpath="results/{project}/logs/"
     conda: 
         "envs/env_iqtree.yaml"
     threads: workflow.cores * 0.3  
     shell:
         "mkdir -p {params.abspath_ML_p}; iqtree -s {input.supermatrix} -st AA -spp {input.best_scheme_nex} "
-        "-pre {params.abspath_ML_p}/ML_p_{wildcards.repnumber}_{wildcards.project} -nt {threads} -gmedian -safe"
+        "-pre {params.abspath_ML_p}/ML_p_{wildcards.repnumber}_{wildcards.project} -nt {threads} -gmedian -safe; "
+        "cp {params.abspath_ML_p}/ML_p_{wildcards.repnumber}_{wildcards.project}.log {params.logpath}"
 
 rule ML_r:
     input:
@@ -69,13 +75,15 @@ rule ML_r:
         ML_r_log="results/{project}/ML_r/ML_r_{repnumber}_{project}.log",
         ML_r_treefile="results/{project}/ML_r/ML_r_{repnumber}_{project}.treefile"
     params: 
-        abspath_ML_r="results/{project}/ML_r"
+        abspath_ML_r="results/{project}/ML_r",
+        logpath="results/{project}/logs/"
     conda: 
         "envs/env_iqtree.yaml"
     threads: workflow.cores * 0.3  
     shell:
         "mkdir -p {params.abspath_ML_r}; iqtree -s {input.supermatrix} -st AA -spp {input.best_scheme_nex} "
-        "-pre {params.abspath_ML_r}/ML_r_{wildcards.repnumber}_{wildcards.project} -nt {threads}  -gmedian -t RANDOM -safe"
+        "-pre {params.abspath_ML_r}/ML_r_{wildcards.repnumber}_{wildcards.project} -nt {threads}  -gmedian -t RANDOM -safe; "
+        "cp {params.abspath_ML_r}/ML_r_{wildcards.repnumber}_{wildcards.project}.log {params.logpath}"
 
 rule get_ML_results:
     input:
@@ -101,8 +109,11 @@ rule find_best_ML_tree:
         ML_results_sort_table="results/{project}/sort_table_ML_{project}.txt"
     params:
         ML_results_table="results/{project}/table_ML_{project}.txt"
+    log:
+        "results/{project}/logs/"
     shell:
-        "ls {input}; sort -k2 {params.ML_results_table} > {output.ML_results_sort_table}"     
+        "(ls {input}; sort -k2 {params.ML_results_table} > {output.ML_results_sort_table}; "
+        "echo sorted {params.ML_results_table}; echo {output.ML_results_sort_table} DONE) &> {log}"     
 
 rule bootstrap:
     input:
@@ -111,13 +122,15 @@ rule bootstrap:
     output:
         BS_boottrees="results/{project}/bootstrap/BS_500_{project}.boottrees"
     params: 
-        abspath_bootstrap="results/{project}/bootstrap"
+        abspath_bootstrap="results/{project}/bootstrap",
+        logpath="results/{project}/logs/"
     conda: 
         "envs/env_iqtree.yaml"
     threads: workflow.cores * 0.4 
     shell:
         "mkdir -p {params.abspath_bootstrap}; iqtree -s {input.supermatrix} -st AA -spp {input.best_scheme_nex} "
-        "-pre {params.abspath_bootstrap}/BS_500_{wildcards.project} -nt {threads} -gmedian -t RANDOM -bo 500 -safe"
+        "-pre {params.abspath_bootstrap}/BS_500_{wildcards.project} -nt {threads} -gmedian -t RANDOM -bo 500 -safe; "
+        "cp {params.abspath_bootstrap}/BS_500_{wildcards.project}.log {params.logpath}"
 
 rule SH_aLRT_aBayes:
     input:
@@ -127,7 +140,8 @@ rule SH_aLRT_aBayes:
     output:
         SH_aLRT_aBayes_treefile="results/{project}/tree_SH_aLRT_aBayes/Best_SH_aLRT_aBayes_{project}.treefile"
     params:
-        abspath_SH_aLRT_aBayes="results/{project}/tree_SH_aLRT_aBayes"
+        abspath_SH_aLRT_aBayes="results/{project}/tree_SH_aLRT_aBayes",
+        logpath="results/{project}/logs/"
     conda: 
         "envs/env_iqtree.yaml"
     threads: workflow.cores * 0.3 
@@ -137,7 +151,8 @@ rule SH_aLRT_aBayes:
         "iqtree -s {input.supermatrix} -st AA -spp {input.best_scheme_nex} "
         "-pre {params.abspath_SH_aLRT_aBayes}/Best_SH_aLRT_aBayes_{wildcards.project}  "
         "-nt {threads} -gmedian alrt 10000 -abayes "
-        "-te results/{wildcards.project}/ML_*/\"$bestml\" -safe"
+        "-te results/{wildcards.project}/ML_*/\"$bestml\" -safe; "
+        "cp {params.abspath_SH_aLRT_aBayes}/Best_SH_aLRT_aBayes_{wildcards.project}.log {params.logpath}"
 
 rule tree_BS:
     input:
@@ -146,7 +161,8 @@ rule tree_BS:
     output:
         BS_suptree="results/{project}/tree_BS/tree_BS_{project}.suptree"
     params:
-        abspath_tree_BS="results/{project}/tree_BS"
+        abspath_tree_BS="results/{project}/tree_BS",
+        logpath="results/{project}/logs/"
     conda: 
         "envs/env_iqtree.yaml"
     threads: workflow.cores * 0.1 
@@ -154,7 +170,12 @@ rule tree_BS:
         "bestml=$(head -n1 {input.ML_results_sort_table} | cut -f1); "
         "mkdir -p {params.abspath_tree_BS}; "
         "iqtree -sup results/{wildcards.project}/ML_*/\"$bestml\" "
-        "-t {input.BS_boottrees} -pre {params.abspath_tree_BS}/tree_BS_{wildcards.project} -nt {threads}"
+        "-t {input.BS_boottrees} -pre {params.abspath_tree_BS}/tree_BS_{wildcards.project} -nt {threads}; "
+        "cp {params.abspath_tree_BS}/tree_BS_{wildcards.project}.log {params.logpath}"
+
+#onsuccess:
+    #shell("mkdir -p ")
+
 
 #rule summarize_results:
 

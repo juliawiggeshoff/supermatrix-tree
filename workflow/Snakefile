@@ -10,12 +10,10 @@ def get_supermatrix_file(wildcards):
 
 rule all:
     input:
-        #expand("results/{project}/ML_r/ML_r_{repnumber}_{project}.log", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1))),
-        #expand("results/{project}/ML_r/ML_r_{repnumber}_{project}.treefile", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1))),
-        #expand("results/{project}/ML_p/ML_p_{repnumber}_{project}.log", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1))),
-        #expand("results/{project}/ML_p/ML_p_{repnumber}_{project}.treefile", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1)))
         expand("results/{project}/get_ML_results_{repnumber}_{project}.done", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1))),
-        expand("results/{project}/bootstrap/BS_500_{project}.boottrees", project=list(samples_df.index))
+        #expand("results/{project}/bootstrap/BS_500_{project}.boottrees", project=list(samples_df.index)),
+        expand("results/{project}/tree_SH_aLRT_aBayes/Best_SH_aLRT_aBayes_{project}.treefile", project=list(samples_df.index)),
+        expand("results/{project}/tree_BS/tree_BS_{project}.suptree", project=list(samples_df.index))
 
 rule charset_to_nexus:
     input:
@@ -24,15 +22,13 @@ rule charset_to_nexus:
         charset_nex="results/{project}/charset_{project}.nex"
     params:
         out_dir="results/{project}"
-    log:
-        "results/logs/{project}/charset_to_nexus_{project}.log"
     shell:
-        "(cp {input.charset} {params.out_dir}/charset_{wildcards.project}.txt; "
+        "cp {input.charset} {params.out_dir}/charset_{wildcards.project}.txt; "
         "awk '{{gsub(\"charset\",\"        charset\");print}}' {params.out_dir}/charset_{wildcards.project}.txt > {output.charset_nex}; "
         "sed -i \'1s/^/#nexus\\nbegin sets;\\n/\' {output.charset_nex}; "
         "echo \"end;\" >> {output.charset_nex}; "
         "rm {params.out_dir}/charset_{wildcards.project}.txt; "
-        "echo {output.charset_nex} DONE) &> {log}"
+        "echo {output.charset_nex} DONE"
 
 rule modelfinder:
     input: 
@@ -80,6 +76,7 @@ rule ML_r:
     shell:
         "mkdir -p {params.abspath_ML_r}; iqtree -s {input.supermatrix} -st AA -spp {input.best_scheme_nex} "
         "-pre {params.abspath_ML_r}/ML_r_{wildcards.repnumber}_{wildcards.project} -nt {threads}  -gmedian -t RANDOM -safe"
+
 rule get_ML_results:
     input:
         ML_r_log="results/{project}/ML_r/ML_r_{repnumber}_{project}.log",
@@ -88,15 +85,24 @@ rule get_ML_results:
         touch("results/{project}/get_ML_results_{repnumber}_{project}.done")
     params:
         ML_results_table="results/{project}/table_ML_{project}.txt",
-        #ML_results_sort_table="results/{project}/sort_table_ML_{project}.txt",
-        ML_r_prefix="ML_r_{repnumber}_{project}",
-        ML_p_prefix="ML_p_{repnumber}_{project}"
+        ML_r_filename="ML_r_{repnumber}_{project}.treefile",
+        ML_p_filename="ML_p_{repnumber}_{project}.treefile"
     shell:
         "touch {params.ML_results_table}; "
-        "echo -n {params.ML_r_prefix} >> {params.ML_results_table}; "
+        "echo -n {params.ML_r_filename} >> {params.ML_results_table}; "
         "echo -n -e \"\\t\" >> {params.ML_results_table}; grep \"BEST SCORE FOUND\" {input.ML_r_log} | cut -d \":\" -f2 | sed \"s/ //\" | xargs echo >> {params.ML_results_table}; "
-        "echo -n {params.ML_p_prefix} >> {params.ML_results_table}; "
+        "echo -n {params.ML_p_filename} >> {params.ML_results_table}; "
         "echo -n -e \"\\t\" >> {params.ML_results_table}; grep \"BEST SCORE FOUND\" {input.ML_p_log} | cut -d \":\" -f2 | sed \"s/ //\" | xargs echo >> {params.ML_results_table}"
+
+rule find_best_ML_tree:
+    input:
+        expand("results/{project}/get_ML_results_{repnumber}_{project}.done", project=list(samples_df.index), repnumber=list(range(1,int(config["ML_trees"])+1)))
+    output:
+        ML_results_sort_table="results/{project}/sort_table_ML_{project}.txt"
+    params:
+        ML_results_table="results/{project}/table_ML_{project}.txt"
+    shell:
+        "ls {input}; sort -k2 {params.ML_results_table} > {output.ML_results_sort_table}"     
 
 rule bootstrap:
     input:
@@ -112,3 +118,45 @@ rule bootstrap:
     shell:
         "mkdir -p {params.abspath_bootstrap}; iqtree -s {input.supermatrix} -st AA -spp {input.best_scheme_nex} "
         "-pre {params.abspath_bootstrap}/BS_500_{wildcards.project} -nt {threads} -gmedian -t RANDOM -bo 500 -safe"
+
+rule SH_aLRT_aBayes:
+    input:
+        best_scheme_nex="results/{project}/modelfinder/BestModels_aa_{project}.best_scheme.nex",
+        supermatrix=get_supermatrix_file,
+        ML_results_sort_table="results/{project}/sort_table_ML_{project}.txt"        
+    output:
+        SH_aLRT_aBayes_treefile="results/{project}/tree_SH_aLRT_aBayes/Best_SH_aLRT_aBayes_{project}.treefile"
+    params:
+        abspath_SH_aLRT_aBayes="results/{project}/tree_SH_aLRT_aBayes"
+    conda: 
+        "envs/env_iqtree.yaml"
+    threads: workflow.cores * 0.3 
+    shell:
+        "bestml=$(head -n1 {input.ML_results_sort_table} | cut -f1); "
+        "mkdir -p {params.abspath_SH_aLRT_aBayes}; "
+        "iqtree -s {input.supermatrix} -st AA -spp {input.best_scheme_nex} "
+        "-pre {params.abspath_SH_aLRT_aBayes}/Best_SH_aLRT_aBayes_{wildcards.project}  "
+        "-nt {threads} -gmedian alrt 10000 -abayes "
+        "-te results/{wildcards.project}/ML_*/\"$bestml\" -safe"
+
+rule tree_BS:
+    input:
+        BS_boottrees="results/{project}/bootstrap/BS_500_{project}.boottrees",
+        ML_results_sort_table="results/{project}/sort_table_ML_{project}.txt"
+    output:
+        BS_suptree="results/{project}/tree_BS/tree_BS_{project}.suptree"
+    params:
+        abspath_tree_BS="results/{project}/tree_BS"
+    conda: 
+        "envs/env_iqtree.yaml"
+    threads: workflow.cores * 0.1 
+    shell:
+        "bestml=$(head -n1 {input.ML_results_sort_table} | cut -f1); "
+        "mkdir -p {params.abspath_tree_BS}; "
+        "iqtree -sup results/{wildcards.project}/ML_*/\"$bestml\" "
+        "-t {input.BS_boottrees} -pre {params.abspath_tree_BS}/tree_BS_{wildcards.project} -nt {threads}"
+
+#rule summarize_results:
+
+
+

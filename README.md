@@ -52,10 +52,11 @@ The partition generated with FASconCAT-G is in text format and has to be convert
 
 This is how my example partition file looks like:
 
-```charset 3133at6447 = 1 - 463 ;
+```
+charset 3133at6447 = 1 - 463 ;
 charset 7677at6447 = 464 - 636;
 charset 3966at6447 = 637 - 1001;
-			...
+		...
 charset 1248at6447 = 72452 - 73396;
 charset 7265at6447 = 73397 - 73664;
 ```
@@ -66,12 +67,13 @@ If you choose **true**, the first rule of the workflow will adjust the file by a
 
 This is how the partition file in nexus file should look like:
 
-```#nexus
+```
+#nexus
 begin sets;
         charset 3133at6447 = 1 - 463 ;
         charset 7677at6447 = 464 - 636;
         charset 3966at6447 = 637 - 1001;
-				...
+			...
         charset 1248at6447 = 72452 - 73396;
         charset 7265at6447 = 73397 - 73664;
 end;

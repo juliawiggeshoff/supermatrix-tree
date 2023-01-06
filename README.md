@@ -184,7 +184,7 @@ or
 
 **Not recommended** unless you have a lot of storage and CPUs available (and time to wait...). Nevertheless, you can simply run like this:
 
-`nohup snakemake --keep-going --use-conda --verbose --printshellcmds --reason --nolock --cores 11 > nohup_ml-supermatrix-tree_$(date +"%F_%H").out &`
+`nohup snakemake --configfile config/configfile.yaml --keep-going --use-conda --verbose --printshellcmds --reason --nolock --cores 11 > nohup_ml-supermatrix-tree_$(date +"%F_%H").out &`
 
 Modify number of cores accordingly.
 

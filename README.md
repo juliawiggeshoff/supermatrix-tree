@@ -1,4 +1,4 @@
-# Maximum Likelihood Supermatrix Tree
+# Maximum-Likelihood Supermatrix Tree with IQ-TREE
 
 The workflow is designed to perform substituion model selections, maximum likelihood tree estimation (random and parsimonious starting trees), nonparametric bootstrapping (BS), and two single branch tests (SH-like approximate likelihood ratio test - SH-aLRT - and approximate Bayes test - aBayes).  Finally, two consensus trees are created, one with the BS support values and the other with the combined SH-aLRT and aBayes values.
 
@@ -15,8 +15,10 @@ I recommend running the workflow on a HPC system, as the analyses are resource a
 Follow [these](https://conda.io/projects/conda/en/latest/user-guide/install/linux.html) instructions.
 	- After you are all set with conda, I highly (**highly!**) recommend installing a much much faster package manager to replace conda, [mamba](https://github.com/mamba-org/mamba)
 	- First activate your conda base
+
 	`conda activate base`
-	-Then, type:
+	- Then, type:
+	
 	`conda install -n base -c conda-forge mamba` 
 
 - Likewise, follow [this](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) tutorial to install Git if you don't have it.
@@ -232,15 +234,15 @@ If you are within the folder `misc/`:
 
 You should see `run_ml-supermatrix-tree.sh` within the path where the folders config/, resources/, results/, and workflow/ are, together with files README.md and environment.yaml
 
-Remember to `mkdir -p cluster_logs` before running for the first time
+Remember to `mkdir cluster_logs` before running for the first time
 
 Finally, run:
 
 `qsub run_ml-supermatrix-tree.sh`
 
-# Finishing the workflow: report.zip
+# Finishing the workflow: report.html
 
-Upon successfully finishing the analyses, Snakemake will **automatically** generate a compressed report in the working directory, `report.zip.` 
+Upon successfully finishing the analyses, Snakemake will **automatically** generate a compressed report in the working directory, `report.html` 
 
 It describes the used software versions, the commands, and paths to in and output files. 
 

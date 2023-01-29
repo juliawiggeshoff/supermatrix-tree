@@ -206,7 +206,7 @@ Run this to create the environments from the rules:
 
 `mkdir snakejob_logs`
 
-`nohup snakemake --configfile config/configfile.yaml --keep-going --use-conda --verbose --printshellcmds --reason --nolock --cores 31 --max-threads 15 --cluster "qsub -V -b y -j y -o snakejob_logs/ -cwd -q fast.q,small.q,medium.q,large.q -M user.email@gmail.com -m be" > nohup_ml-supermatrix-tree_$(date +"%F_%H").out &`
+`nohup snakemake --configfile config/configfile.yaml --keep-going --use-conda --verbose --printshellcmds --reason --nolock --cores 31 --max-threads 15 --cluster "qsub -V -b y -j y -o snakejob_logs/ -cwd -q fast.q,small.q,medium.q,large.q -M user.email@gmail.com -m be" > nohup_ml-supermatrix-tree_$(date +"%F_%H_%M_%S").out &`
 
 Remember to:
 1. Modify *user.email@gmail.com*

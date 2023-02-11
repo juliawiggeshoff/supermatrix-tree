@@ -25,4 +25,5 @@ snakemake \
     --verbose \
     --printshellcmds \
     --reason \
-    --nolock 
+    --nolock \
+    --rerun-incomplete

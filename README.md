@@ -206,15 +206,13 @@ Run this to create the environments from the rules:
 
 `mkdir snakejob_logs`
 
-<<<<<<< HEAD
-`nohup snakemake --configfile config/configfile.yaml --keep-going --use-conda --verbose --printshellcmds --reason --nolock --cores 31 --max-threads 15 --cluster "qsub -V -b y -j y -o snakejob_logs/ -cwd -q fast.q,small.q,medium.q,large.q -M user.email@gmail.com -m be" > nohup_ml-supermatrix-tree_$(date +"%F_%H_%M_%S").out &`
-=======
-`nohup snakemake --configfile config/configfile.yaml --keep-going --use-conda --verbose --printshellcmds --reason --nolock --rerun-incomplete --cores 31 --max-threads 15 --cluster "qsub -V -b y -j y -o snakejob_logs/ -cwd -q fast.q,small.q,medium.q,large.q -M user.email@gmail.com -m be" > nohup_ml-supermatrix-tree_$(date +"%F_%H").out &`
->>>>>>> 2d56d17 (included --rerun-incomplete in snakemake command)
+
+`nohup snakemake --configfile config/configfile.yaml --keep-going --use-conda --verbose --printshellcmds --reason --nolock --rerun-incomplete --cores 31 --max-threads 15 --cluster "qsub -terse -V -b y -j y -o snakejob_logs/ -cwd -q fast.q,small.q,medium.q,large.q -M user.email@gmail.com -m be -pe smp {threads}" --cluster-cancel "qdel" > nohup_ml-supermatrix-tree_$(date +"%F_%H").out &`
 
 Remember to:
 1. Modify *user.email@gmail.com*
 2. Change values for --cores and --max-threads accordingly 
+3. Change environment for -pe as needed (e.g. smp)
 
 ### Option 2:
 
@@ -227,7 +225,7 @@ Features to modify:
 - Mailing settings, if needed: `-m be`
 - If you  want to split stderr to stdout, use `-j n` instead and add the line `#$ -e cluster_logs/`
 - If you want to, the name of the jobscript: `-N ml-supermatrix-tree`
-- **Name of parallel environment (PE) as well as the number of maximum threads to use:** `-pe smp 31`
+- **Name of parallel environment (e.g. smp) as well as the number of maximum threads to use:** `-pe smp 31`
 - **Queue name!** (extremely unique to your system): `-q small.q,medium.q,large.q`
 
 Ater modifying the template, copy it (while also modifying its name) to the working directory:
